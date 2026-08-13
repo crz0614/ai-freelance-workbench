@@ -4,7 +4,7 @@
 
 **[Live demo](https://ai-freelance-workbench.vercel.app)**
 
-A privacy-safe portfolio project showing how an AI-assisted freelance pipeline can discover, rank and turn technical opportunities into grounded proposals.
+A privacy-safe AI workflow that discovers, ranks and turns technical opportunities into grounded proposals.
 
 **This public deployment reads live public listings from Remotive and GitHub.** It never inserts fallback opportunities when a source is empty or unavailable. It does not contain résumés, email addresses, application history, OAuth tokens, browser sessions, cookies or production credentials.
 
@@ -43,7 +43,7 @@ flowchart TD
   B --> C["Fit and freshness ranking"]
   C --> D["Next.js opportunity API"]
   D --> E["Review workbench"]
-  F["Verified portfolio facts"] --> G["Grounded proposal engine"]
+  F["Verified experience facts"] --> G["Grounded proposal engine"]
   E --> G
   G --> H["Human approval"]
 ```
@@ -52,7 +52,7 @@ Provider adapters run server-side, normalize public results to one opportunity c
 
 ## 中文说明
 
-这是一个隐私安全的 AI 外包机会工作台作品集，展示从多渠道机会发现、统一数据结构、匹配排序，到基于已验证经历生成申请方案的完整流程。
+这是一个隐私安全的 AI 外包机会工作台，覆盖多渠道机会发现、统一数据结构、匹配排序，以及基于已验证经历生成申请方案的完整流程。
 
 公开版只展示 Remotive 和 GitHub 的实时公开数据；采集失败或没有结果时会明确显示，不会补入虚构岗位。仓库不包含真实姓名、邮箱、简历、投递历史、OAuth 令牌、浏览器 Cookie、会话或生产密钥。
 
@@ -69,7 +69,7 @@ Provider adapters run server-side, normalize public results to one opportunity c
 - Secrets belong only in server-side environment variables.
 - `.env*` is ignored except `.env.example`.
 - The demo does not persist personal data.
-- Proposal claims must come from verified portfolio facts.
+- Proposal claims must come from verified experience facts.
 - A human approval step remains before any external submission.
 
 ## License

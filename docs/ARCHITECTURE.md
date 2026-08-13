@@ -2,7 +2,7 @@
 
 ## Boundaries
 
-The browser receives normalized opportunity objects, never provider credentials. Source adapters, scoring and optional model calls belong on the server. Personal portfolio facts, when enabled in a private deployment, must be encrypted at rest and separated from public demo data.
+The browser receives normalized opportunity objects, never provider credentials. Source adapters, scoring and optional model calls belong on the server. Personal experience facts, when enabled in a private deployment, must be encrypted at rest and separated from public demo data.
 
 ## Pipeline
 
@@ -11,7 +11,7 @@ The browser receives normalized opportunity objects, never provider credentials.
 3. Filters remove stale, duplicate and non-remote listings.
 4. Ranking combines verified skill overlap, recency and work-mode compatibility.
 5. The UI explains the score instead of presenting an opaque number.
-6. Proposal generation may cite only verified portfolio facts.
+6. Proposal generation may cite only verified experience facts.
 7. External submission always requires an auditable approval step.
 
 ## Production evolution
