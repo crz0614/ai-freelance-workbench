@@ -12,7 +12,8 @@ function isTechnical(value: string) {
   return /\b(website|landing page|web app|mobile app|developer|engineer|software|backend|frontend|full.?stack|wordpress|shopify|api|integration|automation|script|devops|cloud|AI|machine learning|data(?:base| engineering| pipeline)?|plugin|bug fix)\b/i.test(value);
 }
 function isTechnicalTitle(value: string) {
-  return /(website|landing page|web app|mobile app|developer|engineer|software|backend|frontend|full.?stack|wordpress|shopify|api|integration|automation|script|devops|cloud|machine learning|data engineer|plugin|bug fix)/i.test(value);
+  return /\b(website|landing page|web app|mobile app|(?:software|backend|frontend|full.?stack|web|mobile|data) developer|software engineer|backend|frontend|full.?stack|wordpress|shopify|api|integration|automation|script(?:ing)?|devops|cloud|machine learning|data engineer|plugin|bug fix)\b/i.test(value)
+    && !/\b(manuscript|proofread|copy edit|civil|structural|architect|landscape|autocad|registered engineer|legal|medical)\b/i.test(value);
 }
 function isFinished(value: string) {
   return /(position (?:has been )?filled|hired someone|no longer (?:accepting|available)|applications? closed|project closed|bounty rewarded|already (?:fixed|completed|awarded)|winner selected|work has been completed)/i.test(value);

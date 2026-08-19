@@ -15,6 +15,7 @@ test("qualification removes stale, finished, unsafe and high-competition work",(
   assert.match(route,/competition >= 3/);assert.match(route,/isCashBudget/);assert.match(route,/no-store, no-cache, must-revalidate/);
   assert.match(route,/MIN_FIXED_PRICE_USD = 25/);assert.match(route,/isTechnicalTitle\(title\)/);
   assert.match(route,/MAX_MARKETPLACE_PROPOSALS = 8/);assert.match(route,/Payment verified/);assert.match(route,/item\.status === "verified-open"/);
+  assert.match(route,/manuscript\|proofread/);assert.match(route,/registered engineer/);
 });
 test("every item carries verification and risk metadata",()=>{
   for(const field of ["sourceUrl","verifiedAt","competition","trustSignals","risks","deliverable","status"])assert.match(data,new RegExp(`${field}:`));
