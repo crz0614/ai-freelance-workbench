@@ -39,7 +39,7 @@ async function remotive(): Promise<CollectorResult> {
 async function github(): Promise<CollectorResult> {
   const since = new Date(Date.now() - MAX_LISTING_AGE_DAYS * 86_400_000).toISOString().slice(0, 10);
   const queries = [`is:issue is:open no:assignee label:bounty created:>=${since}`, `is:issue is:open no:assignee "paid bounty" created:>=${since}`, `is:issue is:open no:assignee "cash reward" created:>=${since}`];
-  const auth = process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {};
+  const auth: Record<string, string> = process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {};
   const pages = await Promise.all(queries.map((query) => json(`https://api.github.com/search/issues?q=${encodeURIComponent(query)}&sort=updated&order=desc&per_page=30`, { headers: auth })));
   const unique = new Map<number, any>(); pages.flatMap((page: any) => page.items || []).forEach((item: any) => unique.set(item.id, item));
   let rejected = 0; const items: Opportunity[] = [];
