@@ -6,11 +6,13 @@ const page=fs.readFileSync(new URL("../app/page.tsx",import.meta.url),"utf8");
 test("collectors cover bounties, direct projects and contract feeds",()=>{
   assert.match(route,/api\.github\.com\/search\/issues/);assert.match(route,/reddit\.com\/r\/forhire/);
   assert.match(route,/remotive\.com\/api/);assert.match(route,/remoteok\.com\/api/);
+  assert.match(route,/freelancer\.com\/rss\.xml/);
   assert.match(route,/live-verified-multi-source/);
 });
 test("qualification removes stale, finished, unsafe and high-competition work",()=>{
   assert.match(route,/MAX_LISTING_AGE_DAYS = 30/);assert.match(route,/isFinished/);assert.match(route,/isUnsafe/);
   assert.match(route,/competition >= 3/);assert.match(route,/isCashBudget/);assert.match(route,/no-store, no-cache, must-revalidate/);
+  assert.match(route,/MIN_FIXED_PRICE_USD = 25/);assert.match(route,/isTechnicalTitle\(title\)/);
 });
 test("every item carries verification and risk metadata",()=>{
   for(const field of ["sourceUrl","verifiedAt","competition","trustSignals","risks","deliverable","status"])assert.match(data,new RegExp(`${field}:`));

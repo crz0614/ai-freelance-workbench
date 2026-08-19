@@ -7,7 +7,7 @@ const MIN_FIXED_PRICE_USD = 25;
 const verifiedAt = () => new Date().toISOString();
 
 function isTechnical(value: string) {
-  return /(website|landing page|web app|mobile app|developer|engineer|software|backend|frontend|full.?stack|wordpress|shopify|api|integration|automation|script|devops|cloud|ai|machine learning|data|plugin|bug fix)/i.test(value);
+  return /\b(website|landing page|web app|mobile app|developer|engineer|software|backend|frontend|full.?stack|wordpress|shopify|api|integration|automation|script|devops|cloud|AI|machine learning|data(?:base| engineering| pipeline)?|plugin|bug fix)\b/i.test(value);
 }
 function isTechnicalTitle(value: string) {
   return /(website|landing page|web app|mobile app|developer|engineer|software|backend|frontend|full.?stack|wordpress|shopify|api|integration|automation|script|devops|cloud|machine learning|data engineer|plugin|bug fix)/i.test(value);
@@ -128,7 +128,7 @@ async function freelancerProjects(): Promise<CollectorResult> {
     if (Number.isNaN(published.getTime())) { rejected++; continue; }
     const publishedAt = published.toISOString();
     const budget = budgetFor(all); const minimum = budgetMinUsd(budget);
-    if (!sourceUrl || ageInDays(publishedAt) > 7 || !isTechnical(all) || !isCashBudget(budget) || minimum === null || minimum < MIN_FIXED_PRICE_USD || isFinished(all) || isUnsafe(all)) { rejected++; continue; }
+    if (!sourceUrl || ageInDays(publishedAt) > 7 || !isTechnicalTitle(title) || !isCashBudget(budget) || minimum === null || minimum < MIN_FIXED_PRICE_USD || isFinished(all) || isUnsafe(all)) { rejected++; continue; }
     items.push({ id: `freelancer-${sourceUrl.split("/").filter(Boolean).pop()}`, company: "Freelancer marketplace client", role: title,
       source: "Freelancer project feed", sourceUrl, location: "Remote", type: "Marketplace fixed-price project", budget,
       budgetMinUsd: minimum, match: score(all, publishedAt, null, true), publishedAt, verifiedAt: verifiedAt(), skills: skillsFor(all),
