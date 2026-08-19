@@ -48,17 +48,9 @@ async function remotive(): Promise<CollectorResult> {
   return { items: items.slice(0, 20), rejected };
 }
 
-async function github(): Promise<CollectorResult> {
+async function githubBounties(sourceName: string, queryTemplates: string[], platformPattern?: RegExp): Promise<CollectorResult> {
   const since = new Date(Date.now() - MAX_LISTING_AGE_DAYS * 86_400_000).toISOString().slice(0, 10);
-  const queries = [
-    `is:issue is:open no:assignee label:bounty created:>=${since}`,
-    `is:issue is:open no:assignee "paid bounty" created:>=${since}`,
-    `is:issue is:open no:assignee "cash reward" created:>=${since}`,
-    `is:issue is:open no:assignee "algora.io" created:>=${since}`,
-    `is:issue is:open no:assignee "app.opire.dev" created:>=${since}`,
-    `is:issue is:open no:assignee "polar.sh" created:>=${since}`,
-    `is:issue is:open no:assignee "oss.issuehunt.io" created:>=${since}`,
-  ];
+  const queries = queryTemplates.map((query) => `${query} created:>=${since}`);
   const auth: Record<string, string> = process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {};
   const pages = await Promise.all(queries.map((query) => json(`https://api.github.com/search/issues?q=${encodeURIComponent(query)}&sort=updated&order=desc&per_page=30`, { headers: auth })));
   const unique = new Map<number, any>(); pages.flatMap((page: any) => page.items || []).forEach((item: any) => unique.set(item.id, item));
@@ -67,6 +59,11 @@ async function github(): Promise<CollectorResult> {
     const body = clean(x.body || ""); const all = `${x.title} ${body} ${(x.labels || []).map((label: any) => label.name).join(" ")}`;
     const repoPath = new URL(x.repository_url).pathname.split("/repos/")[1]; const budget = budgetFor(all); const minimum = budgetMinUsd(budget);
     if (x.pull_request || ageInDays(x.created_at) > MAX_LISTING_AGE_DAYS || ageInDays(x.updated_at) > 14 || !isTechnical(all) || !isCashBudget(budget) || minimum === null || minimum < MIN_FIXED_PRICE_USD || isFinished(all) || isUnsafe(all) || /reward\s*=\s*0|BountyScout|scan results|bounty alert|mirrored from|security exploit|frantic bounty|slots? available|worker price/i.test(all)) { rejected++; continue; }
+    if (platformPattern) {
+      const platformUrl = (all.match(/https?:\/\/[^\s)]+/gi) || []).find((url) => platformPattern.test(url));
+      if (!platformUrl) { rejected++; continue; }
+      try { const platformPage = clean(await text(platformUrl)); if (!platformPage || isFinished(platformPage)) { rejected++; continue; } } catch { rejected++; continue; }
+    }
     let repo: any;
     try { repo = await json(x.repository_url, { headers: auth }); } catch { rejected++; continue; }
     if (repo.archived || repo.disabled || repo.fork || repo.stargazers_count < 5 || ageInDays(repo.pushed_at) > 30 || ageInDays(repo.created_at) < 60) { rejected++; continue; }
@@ -79,16 +76,25 @@ async function github(): Promise<CollectorResult> {
       competition = competitors.size;
     } catch { rejected++; continue; }
     if (competition >= 3) { rejected++; continue; }
-    const platform = /algora\.io/i.test(all) ? "Algora" : /app\.opire\.dev|opirebot/i.test(all) ? "Opire" : /polar\.sh/i.test(all) ? "Polar" : /issuehunt/i.test(all) ? "IssueHunt" : "GitHub";
-    items.push({ id: `github-${x.id}`, company: repoPath, role: clean(x.title), source: `${platform} verified bounty`, sourceUrl: x.html_url,
+    items.push({ id: `github-${x.id}`, company: repoPath, role: clean(x.title), source: sourceName, sourceUrl: x.html_url,
       location: "Remote / open source", type: "Outcome-based bounty", budget, budgetMinUsd: budgetMinUsd(budget), match: score(all, x.created_at, competition, true),
       publishedAt: x.created_at, verifiedAt: verifiedAt(), skills: skillsFor(all), summary: body.slice(0, 260),
       deliverable: "Mergeable implementation satisfying the issue acceptance criteria", competition, status: "verified-open",
-      trustSignals: ["Issue open now", "No assignee", "Cash amount published", platform === "GitHub" ? "Direct GitHub bounty" : `${platform} payment reference`, "Recent repository activity", `${repo.stargazers_count} repository stars`],
+      trustSignals: ["Issue open now", "No assignee", "Cash amount published", platformPattern ? "Payment platform page rechecked" : "Direct GitHub bounty", "Recent repository activity", `${repo.stargazers_count} repository stars`],
       risks: competition ? [`${competition} visible claim/attempt signal(s)`] : ["Hidden work outside GitHub is still possible"] });
   }
   return { items: items.slice(0, 15), rejected };
 }
+
+const github = () => githubBounties("GitHub cash bounty", [
+  "is:issue is:open no:assignee label:bounty",
+  "is:issue is:open no:assignee \"paid bounty\"",
+  "is:issue is:open no:assignee \"cash reward\"",
+]);
+const algora = () => githubBounties("Algora verified bounty", ["is:issue is:open no:assignee \"algora.io\""], /algora\.io/i);
+const opire = () => githubBounties("Opire verified bounty", ["is:issue is:open no:assignee \"app.opire.dev\"", "is:issue is:open no:assignee opirebot"], /(?:app\.)?opire\.dev/i);
+const polar = () => githubBounties("Polar verified bounty", ["is:issue is:open no:assignee \"polar.sh\""], /polar\.sh/i);
+const issueHunt = () => githubBounties("IssueHunt verified bounty", ["is:issue is:open no:assignee issuehunt"], /(?:oss\.)?issuehunt\.io/i);
 
 async function remoteOk(): Promise<CollectorResult> {
   const data = (await json("https://remoteok.com/api")) as any[];
@@ -138,7 +144,16 @@ async function freelancerProjects(): Promise<CollectorResult> {
 }
 
 export async function GET() {
-  const collectors = [{ name: "GitHub + trusted bounty platforms", run: github }, { name: "Freelancer verified projects", run: freelancerProjects }, { name: "Remotive contracts", run: remotive }, { name: "Remote OK contracts", run: remoteOk }];
+  const collectors = [
+    { name: "GitHub cash bounties", run: github },
+    { name: "Algora", run: algora },
+    { name: "Opire", run: opire },
+    { name: "Polar", run: polar },
+    { name: "IssueHunt", run: issueHunt },
+    { name: "Freelancer verified projects", run: freelancerProjects },
+    { name: "Remotive contracts", run: remotive },
+    { name: "Remote OK contracts", run: remoteOk },
+  ];
   const settled = await Promise.allSettled(collectors.map((collector) => collector.run()));
   const sources: Health[] = settled.map((result, index) => result.status === "fulfilled"
     ? { name: collectors[index].name, ok: true, count: result.value.items.length, rejected: result.value.rejected }

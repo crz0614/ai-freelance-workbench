@@ -7,7 +7,9 @@ test("collectors cover bounties, direct projects and contract feeds",()=>{
   assert.match(route,/api\.github\.com\/search\/issues/);
   assert.match(route,/remotive\.com\/api/);assert.match(route,/remoteok\.com\/api/);
   assert.match(route,/freelancer\.com\/rss\.xml/);
-  for(const platform of ["algora\\.io","app\\.opire\\.dev","polar\\.sh","oss\\.issuehunt\\.io"])assert.match(route,new RegExp(platform));
+  for(const platform of ["algora\\.io","app\\.opire\\.dev","polar\\.sh"])assert.match(route,new RegExp(platform));
+  for(const source of ["Algora verified bounty","Opire verified bounty","Polar verified bounty","IssueHunt verified bounty"])assert.match(route,new RegExp(source));
+  assert.match(route,/Payment platform page rechecked/);
   assert.match(route,/live-verified-multi-source/);
 });
 test("qualification removes stale, finished, unsafe and high-competition work",()=>{
