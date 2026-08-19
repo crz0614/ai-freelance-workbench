@@ -11,7 +11,7 @@ Runs every public collector with `no-store`, applies qualification rules, and re
       "id": "github-123",
       "company": "owner/repository",
       "role": "Build a verified integration",
-      "source": "GitHub cash bounty",
+      "source": "Algora verified bounty",
       "sourceUrl": "https://github.com/owner/repository/issues/123",
       "budget": "$250",
       "budgetMinUsd": 250,
@@ -25,10 +25,13 @@ Runs every public collector with `no-store`, applies qualification rules, and re
     }
   ],
   "sources": [
-    { "name": "GitHub cash bounty", "ok": true, "count": 1, "rejected": 24 }
+    { "name": "GitHub + trusted bounty platforms", "ok": true, "count": 1, "rejected": 24 }
   ],
   "rules": {
     "maxListingAgeDays": 30,
+    "maxDirectProjectAgeDays": 14,
+    "minimumFixedPriceUsd": 25,
+    "maximumMarketplaceProposals": 8,
     "cashOnly": true,
     "removeFinished": true,
     "maxVisibleBountyCompetition": 2

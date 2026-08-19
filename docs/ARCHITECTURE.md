@@ -6,9 +6,9 @@ The browser receives normalized opportunity objects, never provider credentials.
 
 ## Pipeline
 
-1. Source adapters fetch public GitHub bounties, fixed-price project posts and remote contract feeds with deadlines and rate limits.
+1. Source adapters fetch public GitHub bounties plus Algora, Opire, Polar and IssueHunt payment references, payment-verified fixed-price marketplace projects and remote contract feeds with deadlines and rate limits.
 2. A normalizer maps different payloads to the `Opportunity` contract.
-3. Filters remove listings older than 30 days, duplicate URLs, filled/rewarded tasks, unsafe payment requests, missing cash budgets and bounties with three or more visible claim signals.
+3. Filters remove duplicate URLs, direct projects older than 14 days, other listings older than 30 days, filled/rewarded tasks, unsafe payment requests, missing cash budgets, unverified marketplace clients, marketplace posts with over eight proposals and bounties with three or more visible claim signals.
 4. Ranking combines skill overlap, recency, published compensation and visible competition.
 5. The UI explains the score instead of presenting an opaque number.
 6. Proposal generation may cite only verified experience facts.

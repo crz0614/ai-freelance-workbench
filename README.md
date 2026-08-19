@@ -11,8 +11,8 @@ A privacy-safe AI workflow that discovers, ranks and turns technical opportuniti
 ## What it demonstrates
 
 - A polished responsive Next.js and TypeScript interface
-- Live collectors for GitHub cash bounties, direct fixed-price projects, Remotive contracts and Remote OK contracts
-- Hard removal of listings older than 30 days, filled/rewarded work, unsafe payment requests, missing cash budgets and crowded bounties
+- Live collectors for GitHub plus Algora, Opire, Polar and IssueHunt references, payment-verified Freelancer projects, Remotive contracts and Remote OK contracts
+- Hard removal of stale, filled/rewarded, unsafe, unpriced and crowded work; direct projects expire after 14 days and all other listings after 30 days
 - Source health with kept and rejected counts, five-minute browser refresh and no-cache API responses
 - Search, source filtering, match explanations and pipeline metrics
 - Grounded proposal drafting with an explicit no-invention guardrail
@@ -56,7 +56,7 @@ Provider adapters run server-side, normalize public results to one opportunity c
 
 这是一个隐私安全的 AI 外包机会工作台，覆盖多渠道机会发现、统一数据结构、匹配排序，以及基于已验证经历生成申请方案的完整流程。
 
-公开版实时核验 GitHub 现金赏金、直接固定价项目、Remotive 合同和 Remote OK 合同来源；采集失败或没有结果时会明确显示，不会补入虚构岗位。超过 30 天、已招满或已奖励、非现金、不安全以及高竞争任务会在进入工作台前删除。仓库不包含真实姓名、邮箱、简历、投递历史、OAuth 令牌、浏览器 Cookie、会话或生产密钥。
+公开版实时核验 GitHub 以及 Algora、Opire、Polar、IssueHunt 付款引用、通过客户付款验证的 Freelancer 固定价项目、Remotive 合同和 Remote OK 合同来源；采集失败或没有结果时会明确显示，不会补入虚构岗位。直接项目超过 14 天、其他任务超过 30 天，或已招满、已奖励、非现金、不安全、竞争过高、客户付款未验证时，都会在进入工作台前删除。
 
 主要能力：
 

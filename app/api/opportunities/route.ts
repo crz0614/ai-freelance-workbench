@@ -3,7 +3,9 @@ import { ageInDays, budgetFor, budgetMinUsd, clean, isCashBudget, score, skillsF
 type Health = { name: string; ok: boolean; count: number; rejected: number; error?: string };
 type CollectorResult = { items: Opportunity[]; rejected: number };
 const MAX_LISTING_AGE_DAYS = 30;
+const MAX_DIRECT_PROJECT_AGE_DAYS = 14;
 const MIN_FIXED_PRICE_USD = 25;
+const MAX_MARKETPLACE_PROPOSALS = 8;
 const verifiedAt = () => new Date().toISOString();
 
 function isTechnical(value: string) {
@@ -24,7 +26,7 @@ async function json(url: string, init: RequestInit = {}) {
   return response.json();
 }
 async function text(url: string) {
-  const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000), headers: { "User-Agent": "FreelanceOpportunityWorkbench/2.0", Accept: "application/rss+xml, application/xml, text/xml" } });
+  const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000), headers: { "User-Agent": "FreelanceOpportunityWorkbench/2.0", Accept: "text/html, application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8" } });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return response.text();
 }
@@ -47,7 +49,15 @@ async function remotive(): Promise<CollectorResult> {
 
 async function github(): Promise<CollectorResult> {
   const since = new Date(Date.now() - MAX_LISTING_AGE_DAYS * 86_400_000).toISOString().slice(0, 10);
-  const queries = [`is:issue is:open no:assignee label:bounty created:>=${since}`, `is:issue is:open no:assignee "paid bounty" created:>=${since}`, `is:issue is:open no:assignee "cash reward" created:>=${since}`];
+  const queries = [
+    `is:issue is:open no:assignee label:bounty created:>=${since}`,
+    `is:issue is:open no:assignee "paid bounty" created:>=${since}`,
+    `is:issue is:open no:assignee "cash reward" created:>=${since}`,
+    `is:issue is:open no:assignee "algora.io" created:>=${since}`,
+    `is:issue is:open no:assignee "app.opire.dev" created:>=${since}`,
+    `is:issue is:open no:assignee "polar.sh" created:>=${since}`,
+    `is:issue is:open no:assignee "oss.issuehunt.io" created:>=${since}`,
+  ];
   const auth: Record<string, string> = process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {};
   const pages = await Promise.all(queries.map((query) => json(`https://api.github.com/search/issues?q=${encodeURIComponent(query)}&sort=updated&order=desc&per_page=30`, { headers: auth })));
   const unique = new Map<number, any>(); pages.flatMap((page: any) => page.items || []).forEach((item: any) => unique.set(item.id, item));
@@ -68,34 +78,15 @@ async function github(): Promise<CollectorResult> {
       competition = competitors.size;
     } catch { rejected++; continue; }
     if (competition >= 3) { rejected++; continue; }
-    items.push({ id: `github-${x.id}`, company: repoPath, role: clean(x.title), source: "GitHub cash bounty", sourceUrl: x.html_url,
+    const platform = /algora\.io/i.test(all) ? "Algora" : /app\.opire\.dev|opirebot/i.test(all) ? "Opire" : /polar\.sh/i.test(all) ? "Polar" : /issuehunt/i.test(all) ? "IssueHunt" : "GitHub";
+    items.push({ id: `github-${x.id}`, company: repoPath, role: clean(x.title), source: `${platform} verified bounty`, sourceUrl: x.html_url,
       location: "Remote / open source", type: "Outcome-based bounty", budget, budgetMinUsd: budgetMinUsd(budget), match: score(all, x.created_at, competition, true),
       publishedAt: x.created_at, verifiedAt: verifiedAt(), skills: skillsFor(all), summary: body.slice(0, 260),
       deliverable: "Mergeable implementation satisfying the issue acceptance criteria", competition, status: "verified-open",
-      trustSignals: ["Issue open now", "No assignee", "Cash amount published", "Recent repository activity", `${repo.stargazers_count} repository stars`],
+      trustSignals: ["Issue open now", "No assignee", "Cash amount published", platform === "GitHub" ? "Direct GitHub bounty" : `${platform} payment reference`, "Recent repository activity", `${repo.stargazers_count} repository stars`],
       risks: competition ? [`${competition} visible claim/attempt signal(s)`] : ["Hidden work outside GitHub is still possible"] });
   }
   return { items: items.slice(0, 15), rejected };
-}
-
-async function redditForHire(): Promise<CollectorResult> {
-  const data = (await json("https://www.reddit.com/r/forhire/new.json?limit=100&raw_json=1")) as any;
-  let rejected = 0; const items: Opportunity[] = [];
-  for (const entry of data?.data?.children || []) {
-    const x = entry.data; const title = clean(x.title || ""); const body = clean(x.selftext || ""); const all = `${title} ${body}`;
-    const publishedAt = new Date((x.created_utc || 0) * 1000).toISOString(); const budget = budgetFor(all);
-    const hiring = /^\s*\[(?:hiring|task)\]/i.test(title) || /\b(?:hiring|looking for|need)\b/i.test(title);
-    if (!hiring || x.removed_by_category || ageInDays(publishedAt) > 14 || !isTechnical(all) || !isCashBudget(budget) || isFinished(all) || isUnsafe(all) || /(commission only|equity only|revenue share)/i.test(all)) { rejected++; continue; }
-    const competition = Number.isFinite(x.num_comments) ? x.num_comments : null;
-    if (competition !== null && competition > 12) { rejected++; continue; }
-    items.push({ id: `reddit-${x.id}`, company: x.author ? `u/${x.author}` : "Reddit client", role: title.replace(/^\s*\[[^\]]+\]\s*/i, ""),
-      source: "Reddit r/forhire", sourceUrl: `https://www.reddit.com${x.permalink}`, location: "Remote", type: "Direct fixed-price project",
-      budget, budgetMinUsd: budgetMinUsd(budget), match: score(all, publishedAt, competition, true), publishedAt, verifiedAt: verifiedAt(), skills: skillsFor(all),
-      summary: body.slice(0, 260), deliverable: title, competition, status: "needs-review",
-      trustSignals: ["Live public post", "Cash amount published", "Recent listing"],
-      risks: ["Client identity and escrow must be verified before work", "Comment count is only a competition proxy"] });
-  }
-  return { items: items.slice(0, 20), rejected };
 }
 
 async function remoteOk(): Promise<CollectorResult> {
@@ -128,28 +119,34 @@ async function freelancerProjects(): Promise<CollectorResult> {
     if (Number.isNaN(published.getTime())) { rejected++; continue; }
     const publishedAt = published.toISOString();
     const budget = budgetFor(all); const minimum = budgetMinUsd(budget);
-    if (!sourceUrl || ageInDays(publishedAt) > 7 || !isTechnicalTitle(title) || !isCashBudget(budget) || minimum === null || minimum < MIN_FIXED_PRICE_USD || isFinished(all) || isUnsafe(all)) { rejected++; continue; }
+    if (!sourceUrl || ageInDays(publishedAt) > MAX_DIRECT_PROJECT_AGE_DAYS || !isTechnicalTitle(title) || !isCashBudget(budget) || minimum === null || minimum < MIN_FIXED_PRICE_USD || isFinished(all) || isUnsafe(all)) { rejected++; continue; }
+    let projectPage = "";
+    try { projectPage = clean(await text(sourceUrl)); } catch { rejected++; continue; }
+    const proposals = Number(projectPage.match(/(\d+)\s+(?:freelancers? (?:are )?bidding|proposals?)/i)?.[1]);
+    const open = /Open for bidding|Place your bid/i.test(projectPage) && !/\b(?:Closed|Awarded to|In Progress)\b/i.test(projectPage.slice(0, 1200));
+    const paymentVerified = /Payment verified|verified payment method|client verification/i.test(projectPage);
+    if (!open || !Number.isFinite(proposals) || proposals > MAX_MARKETPLACE_PROPOSALS || !paymentVerified) { rejected++; continue; }
     items.push({ id: `freelancer-${sourceUrl.split("/").filter(Boolean).pop()}`, company: "Freelancer marketplace client", role: title,
       source: "Freelancer project feed", sourceUrl, location: "Remote", type: "Marketplace fixed-price project", budget,
-      budgetMinUsd: minimum, match: score(all, publishedAt, null, true), publishedAt, verifiedAt: verifiedAt(), skills: skillsFor(all),
-      summary: summary.slice(0, 260), deliverable: title, competition: null, status: "needs-review",
-      trustSignals: ["Live marketplace RSS", "Published cash budget", "Posted within 7 days"],
-      risks: ["Bid count and client payment verification must be checked on the project page"] });
+      budgetMinUsd: minimum, match: score(all, publishedAt, proposals, true), publishedAt, verifiedAt: verifiedAt(), skills: skillsFor(all),
+      summary: summary.slice(0, 260), deliverable: title, competition: proposals, status: "verified-open",
+      trustSignals: ["Live marketplace RSS", "Project page open for bidding", "Client payment verification visible", "Published cash budget", `${proposals} proposals`],
+      risks: ["Confirm milestone escrow and exact acceptance criteria before starting"] });
   }
   return { items: items.slice(0, 20), rejected };
 }
 
 export async function GET() {
-  const collectors = [{ name: "GitHub cash bounty", run: github }, { name: "Freelancer project feed", run: freelancerProjects }, { name: "Reddit r/forhire", run: redditForHire }, { name: "Remotive contracts", run: remotive }, { name: "Remote OK contracts", run: remoteOk }];
+  const collectors = [{ name: "GitHub + trusted bounty platforms", run: github }, { name: "Freelancer verified projects", run: freelancerProjects }, { name: "Remotive contracts", run: remotive }, { name: "Remote OK contracts", run: remoteOk }];
   const settled = await Promise.allSettled(collectors.map((collector) => collector.run()));
   const sources: Health[] = settled.map((result, index) => result.status === "fulfilled"
     ? { name: collectors[index].name, ok: true, count: result.value.items.length, rejected: result.value.rejected }
     : { name: collectors[index].name, ok: false, count: 0, rejected: 0, error: result.reason instanceof Error ? result.reason.message : "fetch failed" });
   const opportunities = settled.flatMap((result) => result.status === "fulfilled" ? result.value.items : []);
   const unique = [...new Map(opportunities.map((item) => [item.sourceUrl, item])).values()]
-    .filter((item) => ageInDays(item.publishedAt) <= MAX_LISTING_AGE_DAYS)
+    .filter((item) => item.status === "verified-open" && ageInDays(item.publishedAt) <= MAX_LISTING_AGE_DAYS)
     .sort((a, b) => b.match - a.match || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
   return Response.json({ opportunities: unique, sources, fetchedAt: new Date().toISOString(),
-    rules: { maxListingAgeDays: MAX_LISTING_AGE_DAYS, minimumFixedPriceUsd: MIN_FIXED_PRICE_USD, cashOnly: true, removeFinished: true, maxVisibleBountyCompetition: 2 }, mode: "live-verified-multi-source" },
+    rules: { maxListingAgeDays: MAX_LISTING_AGE_DAYS, maxDirectProjectAgeDays: MAX_DIRECT_PROJECT_AGE_DAYS, minimumFixedPriceUsd: MIN_FIXED_PRICE_USD, maximumMarketplaceProposals: MAX_MARKETPLACE_PROPOSALS, cashOnly: true, removeFinished: true, maxVisibleBountyCompetition: 2 }, mode: "live-verified-multi-source" },
     { headers: { "Cache-Control": "no-store, no-cache, must-revalidate", Pragma: "no-cache", Expires: "0" } });
 }
