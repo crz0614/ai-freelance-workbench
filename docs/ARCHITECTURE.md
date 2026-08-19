@@ -6,10 +6,10 @@ The browser receives normalized opportunity objects, never provider credentials.
 
 ## Pipeline
 
-1. Source adapters fetch public job or bounty data with deadlines and rate limits.
+1. Source adapters fetch public GitHub bounties, fixed-price project posts and remote contract feeds with deadlines and rate limits.
 2. A normalizer maps different payloads to the `Opportunity` contract.
-3. Filters remove stale, duplicate and non-remote listings.
-4. Ranking combines verified skill overlap, recency and work-mode compatibility.
+3. Filters remove listings older than 30 days, duplicate URLs, filled/rewarded tasks, unsafe payment requests, missing cash budgets and bounties with three or more visible claim signals.
+4. Ranking combines skill overlap, recency, published compensation and visible competition.
 5. The UI explains the score instead of presenting an opaque number.
 6. Proposal generation may cite only verified experience facts.
 7. External submission always requires an auditable approval step.
@@ -24,4 +24,4 @@ The browser receives normalized opportunity objects, never provider credentials.
 
 ## Privacy model
 
-The public deployment is intentionally stateless. Fictional company names and descriptions prevent accidental disclosure of a real user's search history. Production identity and email integrations are outside this repository's public demo boundary.
+The public deployment is intentionally stateless. It displays current public listings and their original source URLs but stores no personal search or application history. Production identity and email integrations are outside this repository's public boundary.
