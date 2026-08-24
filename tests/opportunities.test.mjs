@@ -25,7 +25,15 @@ test("every item carries verification and risk metadata",()=>{
   assert.doesNotMatch(data,/SignalForge|Northstar Labs|Orbit Cloud|Atlas Security|Canvas AI/);
 });
 test("the client refreshes live data and shows removal counts",()=>{
-  assert.match(page,/setInterval\(\(\)=>void load\(\),300000\)/);assert.match(page,/REMOVED/);assert.match(page,/stale \/ filled \/ unsafe/);
+  assert.match(page,/setInterval\(\(\) => void load\(\), 300000\)/);assert.match(page,/REMOVED/);assert.match(page,/stale \/ filled \/ unsafe/);
   for(const view of ["Discover","Pipeline","AI Studio","Automations","Docs"])assert.match(page,new RegExp(view));
 });
 test("server persists opportunity snapshots and workspace state",()=>{const store=fs.readFileSync(new URL("../lib/store.ts",import.meta.url),"utf8"),workspace=fs.readFileSync(new URL("../app/api/workspace/route.ts",import.meta.url),"utf8");assert.match(route,/saveSnapshot\(unique\)/);assert.match(store,/CREATE TABLE IF NOT EXISTS workspace_items/);assert.match(store,/ON CONFLICT\(opportunity_id\) DO UPDATE/);assert.match(workspace,/updateWorkspace/);assert.match(workspace,/draft is too large/);});
+test("the client uses the persistent workspace API for review actions",()=>{
+  assert.match(page,/fetch\("\/api\/workspace"/);
+  assert.match(page,/method: "PUT"/);
+  assert.match(page,/"applied"/);
+  assert.match(page,/Draft saved on the server/);
+  assert.match(page,/sourceStillActive/);
+  assert.doesNotMatch(page,/Stored only in this browser session|demo state|setSaved|setPipeline/);
+});
