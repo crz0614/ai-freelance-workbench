@@ -1,4 +1,6 @@
 import { ageInDays, budgetFor, budgetMinUsd, clean, isCashBudget, score, skillsFor, type Opportunity } from "@/lib/opportunities";
+import { saveSnapshot,storageInfo } from "@/lib/store";
+export const runtime="nodejs";
 
 type Health = { name: string; ok: boolean; count: number; rejected: number; error?: string };
 type CollectorResult = { items: Opportunity[]; rejected: number };
@@ -162,7 +164,9 @@ export async function GET() {
   const unique = [...new Map(opportunities.map((item) => [item.sourceUrl, item])).values()]
     .filter((item) => item.status === "verified-open" && ageInDays(item.publishedAt) <= MAX_LISTING_AGE_DAYS)
     .sort((a, b) => b.match - a.match || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  saveSnapshot(unique);
   return Response.json({ opportunities: unique, sources, fetchedAt: new Date().toISOString(),
+    storage:storageInfo(),
     rules: { maxListingAgeDays: MAX_LISTING_AGE_DAYS, maxDirectProjectAgeDays: MAX_DIRECT_PROJECT_AGE_DAYS, minimumFixedPriceUsd: MIN_FIXED_PRICE_USD, maximumMarketplaceProposals: MAX_MARKETPLACE_PROPOSALS, cashOnly: true, removeFinished: true, maxVisibleBountyCompetition: 2 }, mode: "live-verified-multi-source" },
     { headers: { "Cache-Control": "no-store, no-cache, must-revalidate", Pragma: "no-cache", Expires: "0" } });
 }

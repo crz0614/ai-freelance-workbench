@@ -14,9 +14,13 @@ The browser receives normalized opportunity objects, never provider credentials.
 6. Proposal generation may cite only verified experience facts.
 7. External submission always requires an auditable approval step.
 
+## Implemented persistence boundary
+
+The collector now snapshots only records that passed live verification. A separate workspace table stores operator-authored stages, notes and drafts without changing source evidence. Missing opportunities are marked inactive rather than fabricated or silently deleted. Docker Compose mounts SQLite on a named volume; Vercel storage remains explicitly ephemeral.
+
 ## Production evolution
 
-- PostgreSQL for opportunities, profiles and application events
+- PostgreSQL migration for multi-user profiles and application events
 - Queue-backed collectors with per-source circuit breakers
 - Encrypted secret storage and OAuth token rotation
 - Structured LLM outputs with factual-claim validation

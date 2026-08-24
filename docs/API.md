@@ -42,3 +42,15 @@ Runs every public collector with `no-store`, applies qualification rules, and re
 ```
 
 Responses include `Cache-Control: no-store, no-cache, must-revalidate`. A failed source is reported with `ok: false`; it is never replaced with sample data.
+
+## `GET /api/workspace`
+
+Returns server-persisted opportunity stages, notes and proposal drafts together with the last verified opportunity snapshot. `sourceStillActive` distinguishes records that disappeared from the latest qualified scan.
+
+## `PUT /api/workspace`
+
+Accepts `opportunityId`, a stage (`saved`, `pipeline`, `applied`, or `archived`), and optional `note` and `draft`. Unknown opportunity IDs and oversized text are rejected.
+
+## `GET /api/health`
+
+Checks database access and reports whether storage is durable in the current runtime.

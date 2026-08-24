@@ -1,0 +1,15 @@
+services:
+  workbench:
+    build: .
+    environment:
+      DATABASE_FILE: /app/.data/freelance-workbench.db
+    ports: ["3000:3000"]
+    volumes: [workbench_data:/app/.data]
+    healthcheck:
+      test: [CMD-SHELL, wget -qO- http://localhost:3000/api/health | grep -q '"ok":true']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+volumes:
+  workbench_data:

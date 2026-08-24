@@ -1,0 +1,17 @@
+import { DatabaseSync } from "node:sqlite";
+import { mkdirSync } from "node:fs";
+import path from "node:path";
+import type { Opportunity } from "./opportunities";
+
+const filename=process.env.DATABASE_FILE||(process.env.VERCEL?"/tmp/freelance-workbench.db":".data/freelance-workbench.db");
+let connection:DatabaseSync|undefined;
+function database(){if(connection)return connection;if(filename!==":memory:")mkdirSync(path.dirname(filename),{recursive:true});const db=new DatabaseSync(filename);db.exec(`PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;
+CREATE TABLE IF NOT EXISTS opportunities(id TEXT PRIMARY KEY,source_url TEXT UNIQUE NOT NULL,payload_json TEXT NOT NULL,last_seen_at TEXT NOT NULL,active INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE IF NOT EXISTS workspace_items(opportunity_id TEXT PRIMARY KEY,stage TEXT NOT NULL CHECK(stage IN ('saved','pipeline','applied','archived')),note TEXT NOT NULL DEFAULT '',draft TEXT NOT NULL DEFAULT '',updated_at TEXT NOT NULL,FOREIGN KEY(opportunity_id) REFERENCES opportunities(id) ON DELETE CASCADE);
+CREATE INDEX IF NOT EXISTS opportunities_active_seen ON opportunities(active,last_seen_at DESC);`);connection=db;return db}
+
+export type WorkspaceStage="saved"|"pipeline"|"applied"|"archived";
+export function saveSnapshot(items:Opportunity[]){const db=database(),now=new Date().toISOString(),ids=new Set(items.map(x=>x.id));const upsert=db.prepare(`INSERT INTO opportunities(id,source_url,payload_json,last_seen_at,active) VALUES(?,?,?,?,1) ON CONFLICT(id) DO UPDATE SET source_url=excluded.source_url,payload_json=excluded.payload_json,last_seen_at=excluded.last_seen_at,active=1`);db.exec("BEGIN");try{for(const item of items)upsert.run(item.id,item.sourceUrl,JSON.stringify(item),now);for(const row of db.prepare("SELECT id FROM opportunities WHERE active=1").all() as{id:string}[])if(!ids.has(row.id))db.prepare("UPDATE opportunities SET active=0 WHERE id=?").run(row.id);db.exec("COMMIT")}catch(error){db.exec("ROLLBACK");throw error}}
+export function listWorkspace(){const db=database();return(db.prepare(`SELECT w.opportunity_id,w.stage,w.note,w.draft,w.updated_at,o.payload_json,o.active FROM workspace_items w JOIN opportunities o ON o.id=w.opportunity_id ORDER BY w.updated_at DESC`).all() as any[]).map(row=>({opportunityId:row.opportunity_id,stage:row.stage,note:row.note,draft:row.draft,updatedAt:row.updated_at,opportunity:JSON.parse(row.payload_json),sourceStillActive:Boolean(row.active)}))}
+export function updateWorkspace(input:{opportunityId:string;stage:WorkspaceStage;note?:string;draft?:string}){const db=database();if(!db.prepare("SELECT 1 FROM opportunities WHERE id=?").get(input.opportunityId))return null;const now=new Date().toISOString();db.prepare(`INSERT INTO workspace_items(opportunity_id,stage,note,draft,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(opportunity_id) DO UPDATE SET stage=excluded.stage,note=excluded.note,draft=excluded.draft,updated_at=excluded.updated_at`).run(input.opportunityId,input.stage,input.note||"",input.draft||"",now);return{...input,note:input.note||"",draft:input.draft||"",updatedAt:now}}
+export function storageInfo(){const db=database();const opportunities=db.prepare("SELECT COUNT(*) AS count FROM opportunities").get() as{count:number},workspace=db.prepare("SELECT COUNT(*) AS count FROM workspace_items").get() as{count:number};return{engine:"sqlite",durable:!process.env.VERCEL&&filename!==":memory:",opportunityCount:Number(opportunities.count),workspaceCount:Number(workspace.count)}}
