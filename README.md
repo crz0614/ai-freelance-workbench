@@ -14,10 +14,11 @@ A privacy-safe AI workflow that discovers, ranks and turns technical opportuniti
 - Live collectors for GitHub plus Algora, Opire, Polar and IssueHunt references, payment-verified Freelancer projects, Remotive contracts and Remote OK contracts
 - Hard removal of stale, filled/rewarded, unsafe, unpriced and crowded work; direct projects expire after 14 days and all other listings after 30 days
 - Source health with kept and rejected counts, five-minute browser refresh and no-cache API responses
-- Search, source filtering, match explanations and pipeline metrics
+- Search, source filtering, match explanations and a server-persisted review pipeline
 - Grounded proposal drafting with an explicit no-invention guardrail
 - A public API at `/api/opportunities`
-- A server-side SQLite foundation that snapshots verified opportunities and persists pipeline stages, notes and proposal drafts through `/api/workspace`
+- A server-side SQLite workspace that snapshots verified opportunities and persists saved/pipeline/applied/archived stages and proposal drafts through `/api/workspace`
+- UI controls wired to the workspace API, including archive, applied status and explicit draft saving
 - Automated tests, linting, production builds, Docker and GitHub Actions
 
 ## Run locally
@@ -53,11 +54,11 @@ flowchart TD
   G --> H["Human approval"]
 ```
 
-Provider adapters run server-side, normalize public results to one opportunity contract, and preserve the original URL. Empty or failed sources are reported honestly instead of being replaced by sample records. See [Architecture](docs/ARCHITECTURE.md) and [API documentation](docs/API.md).
+Provider adapters run server-side, normalize public results to one opportunity contract, and preserve the original URL. Empty or failed sources are reported honestly instead of being replaced by sample records. The UI loads the live feed first so only qualified opportunities can enter the workspace, then reloads persisted stages and drafts. See [Architecture](docs/ARCHITECTURE.md) and [API documentation](docs/API.md).
 
 ## 中文说明
 
-这是一个隐私安全的 AI 外包机会工作台，覆盖多渠道机会发现、统一数据结构、匹配排序，以及基于已验证经历生成申请方案的完整流程。
+这是一个隐私安全的 AI 外包机会工作台，覆盖多渠道机会发现、统一数据结构、匹配排序，以及基于已验证公开信息生成申请草稿的完整流程。收藏、Pipeline、已申请状态和草稿通过服务器 API 持久化；来源失效后会标记为 inactive，不会把旧机会伪装成仍开放。
 
 公开版实时核验 GitHub 以及 Algora、Opire、Polar、IssueHunt 付款引用、通过客户付款验证的 Freelancer 固定价项目、Remotive 合同和 Remote OK 合同来源；采集失败或没有结果时会明确显示，不会补入虚构岗位。直接项目超过 14 天、其他任务超过 30 天，或已招满、已奖励、非现金、不安全、竞争过高、客户付款未验证时，都会在进入工作台前删除。
 

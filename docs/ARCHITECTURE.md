@@ -16,7 +16,7 @@ The browser receives normalized opportunity objects, never provider credentials.
 
 ## Implemented persistence boundary
 
-The collector now snapshots only records that passed live verification. A separate workspace table stores operator-authored stages, notes and drafts without changing source evidence. Missing opportunities are marked inactive rather than fabricated or silently deleted. Docker Compose mounts SQLite on a named volume; Vercel storage remains explicitly ephemeral.
+The collector snapshots only records that passed live verification. The browser loads that feed before the workspace, so an unknown opportunity cannot be inserted by the UI. A separate workspace table stores operator-authored stages, notes and drafts without changing source evidence. Every visible workspace mutation uses `PUT /api/workspace`; there is no browser-only pipeline or fake automation toggle. Missing opportunities are marked inactive rather than fabricated or silently deleted. Docker Compose mounts SQLite on a named volume; Vercel storage remains explicitly ephemeral.
 
 ## Production evolution
 
