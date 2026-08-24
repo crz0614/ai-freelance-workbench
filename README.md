@@ -17,6 +17,7 @@ A privacy-safe AI workflow that discovers, ranks and turns technical opportuniti
 - Search, source filtering, match explanations and pipeline metrics
 - Grounded proposal drafting with an explicit no-invention guardrail
 - A public API at `/api/opportunities`
+- A server-side SQLite foundation that snapshots verified opportunities and persists pipeline stages, notes and proposal drafts through `/api/workspace`
 - Automated tests, linting, production builds, Docker and GitHub Actions
 
 ## Run locally
@@ -27,6 +28,8 @@ npm run dev
 ```
 
 Open `http://localhost:3000`. No API key is required for demo mode.
+
+Run `docker compose up --build` for the persistent single-operator deployment. Its named volume survives container restarts and `/api/health` verifies database access. Put it behind your own authentication proxy before exposing workspace write APIs publicly. The Vercel demo uses ephemeral storage and is not advertised as a durable application database.
 
 ## Quality checks
 
@@ -65,12 +68,13 @@ Provider adapters run server-side, normalize public results to one opportunity c
 - 技能匹配解释与机会排序
 - 不编造经历的 AI 申请方案工作流
 - API、自动化测试、CI、Docker 和生产部署
+- 自托管模式下的服务器 SQLite：保存真实机会快照、Pipeline 阶段、备注和申请草稿
 
 ## Security
 
 - Secrets belong only in server-side environment variables.
 - `.env*` is ignored except `.env.example`.
-- The demo does not persist personal data.
+- The public Vercel demo uses ephemeral storage; persistent self-hosting is intended for one trusted operator behind authentication.
 - Proposal claims must come from verified experience facts.
 - A human approval step remains before any external submission.
 
