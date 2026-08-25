@@ -54,3 +54,8 @@ Accepts `opportunityId`, a stage (`saved`, `pipeline`, `applied`, or `archived`)
 ## `GET /api/health`
 
 Checks database access and reports whether storage is durable in the current runtime.
+
+
+## `GET /api/metrics`
+
+Returns Prometheus text exposition format (`text/plain; version=0.0.4`) with aggregate gauges for durable storage, active/inactive opportunity snapshots, and workspace stages. The endpoint never includes opportunity payloads, notes, proposal drafts, URLs, credentials, or other customer data. Responses use `Cache-Control: no-store`; database failures return HTTP 503 with an error gauge.

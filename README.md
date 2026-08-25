@@ -16,10 +16,10 @@ A privacy-safe AI workflow that discovers, ranks and turns technical opportuniti
 - Source health with kept and rejected counts, five-minute browser refresh and no-cache API responses
 - Search, source filtering, match explanations and a server-persisted review pipeline
 - Grounded proposal drafting with an explicit no-invention guardrail
-- A public API at `/api/opportunities`
+- Public APIs at `/api/opportunities`, `/api/health`, and Prometheus-compatible `/api/metrics`
 - A server-side SQLite workspace that snapshots verified opportunities and persists saved/pipeline/applied/archived stages and proposal drafts through `/api/workspace`
 - UI controls wired to the workspace API, including archive, applied status and explicit draft saving
-- Automated tests, linting, production builds, Docker and GitHub Actions
+- Aggregate Prometheus metrics for active/inactive opportunities, pipeline stages and durable-storage status without exposing drafts or customer data\n- Automated tests, linting, production builds, Docker and GitHub Actions
 
 ## Run locally
 
@@ -68,7 +68,7 @@ Provider adapters run server-side, normalize public results to one opportunity c
 - 多来源岗位标准化与筛选
 - 技能匹配解释与机会排序
 - 不编造经历的 AI 申请方案工作流
-- API、自动化测试、CI、Docker 和生产部署
+- API、自动化测试、CI、Docker 和生产部署\n- Prometheus 兼容的 `/api/metrics`，仅暴露机会数量、Pipeline 阶段和持久化状态，不泄露草稿或客户数据
 - 自托管模式下的服务器 SQLite：保存真实机会快照、Pipeline 阶段、备注和申请草稿
 
 ## Security
