@@ -37,3 +37,13 @@ test("the client uses the persistent workspace API for review actions",()=>{
   assert.match(page,/sourceStillActive/);
   assert.doesNotMatch(page,/Stored only in this browser session|demo state|setSaved|setPipeline/);
 });
+test("Prometheus metrics expose only aggregate workspace state",()=>{
+  const metrics=fs.readFileSync(new URL("../app/api/metrics/route.ts",import.meta.url),"utf8");
+  const store=fs.readFileSync(new URL("../lib/store.ts",import.meta.url),"utf8");
+  assert.match(metrics,/text\/plain; version=0\.0\.4/);
+  assert.match(metrics,/freelance_workbench_opportunities/);
+  assert.match(metrics,/freelance_workbench_workspace_items/);
+  assert.match(metrics,/Cache-Control":"no-store/);
+  assert.match(store,/SELECT active,COUNT\(\*\) AS count FROM opportunities GROUP BY active/);
+  assert.doesNotMatch(metrics,/note|draft|payload_json|source_url/);
+});
