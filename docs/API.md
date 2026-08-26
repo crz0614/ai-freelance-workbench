@@ -51,11 +51,11 @@ Returns server-persisted opportunity stages, notes and proposal drafts together 
 
 Accepts `opportunityId`, a stage (`saved`, `pipeline`, `applied`, or `archived`), and optional `note` and `draft`. Unknown opportunity IDs and oversized text are rejected.
 
-## `GET /api/health`
+## `GET /api/activity`\n\nReturns the newest persisted workspace events in reverse chronological order. `limit` defaults to 50 and is clamped to 1–100. Events contain only opportunity identity/display metadata, transition type and timestamp; notes and proposal drafts are never returned. Responses use `Cache-Control: no-store`.\n\n## `GET /api/health`
 
 Checks database access and reports whether storage is durable in the current runtime.
 
 
 ## `GET /api/metrics`
 
-Returns Prometheus text exposition format (`text/plain; version=0.0.4`) with aggregate gauges for durable storage, active/inactive opportunity snapshots, and workspace stages. The endpoint never includes opportunity payloads, notes, proposal drafts, URLs, credentials, or other customer data. Responses use `Cache-Control: no-store`; database failures return HTTP 503 with an error gauge.
+Returns Prometheus text exposition format (`text/plain; version=0.0.4`) with aggregate gauges for durable storage, active/inactive opportunity snapshots, and workspace stages, plus the total persisted audit-event count. The endpoint never includes opportunity payloads, notes, proposal drafts, URLs, credentials, or other customer data. Responses use `Cache-Control: no-store`; database failures return HTTP 503 with an error gauge.
