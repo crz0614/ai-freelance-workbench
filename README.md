@@ -69,7 +69,7 @@ Provider adapters run server-side, normalize public results to one opportunity c
 - 技能匹配解释与机会排序
 - 不编造经历的 AI 申请方案工作流
 - API、自动化测试、CI、Docker 和生产部署\n- Prometheus 兼容的 `/api/metrics`，仅暴露机会数量、Pipeline 阶段和持久化状态，不泄露草稿或客户数据
-- 自托管模式下的服务器 SQLite：保存真实机会快照、Pipeline 阶段、备注和申请草稿
+- 自托管模式下的服务器 SQLite：保存真实机会快照、Pipeline 阶段、备注和申请草稿\n- 追加式工作流审计记录：持久化创建、阶段变化和内容更新事件；`/api/activity` 只返回受限元数据，不暴露备注或草稿
 
 ## Security
 

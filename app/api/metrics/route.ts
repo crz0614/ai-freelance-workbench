@@ -12,5 +12,8 @@ export function GET(){try{const snapshot=metricsSnapshot(),lines=[
 "# HELP freelance_workbench_workspace_items Number of workspace items by review stage.",
 "# TYPE freelance_workbench_workspace_items gauge",
 ...Object.entries(snapshot.workspace.stages).map(([stage,count])=>`freelance_workbench_workspace_items{stage="${stage}"} ${count}`),
-`freelance_workbench_workspace_items{stage="total"} ${snapshot.workspace.total}`
+`freelance_workbench_workspace_items{stage="total"} ${snapshot.workspace.total}`,
+"# HELP freelance_workbench_workspace_events_total Total persisted workspace audit events.",
+"# TYPE freelance_workbench_workspace_events_total counter",
+`freelance_workbench_workspace_events_total ${snapshot.workspace.eventCount}`
 ];return new Response(lines.join("\n")+"\n",{headers:{"Content-Type":"text/plain; version=0.0.4; charset=utf-8","Cache-Control":"no-store"}})}catch{return new Response("# HELP freelance_workbench_metrics_error Whether metrics collection failed.\n# TYPE freelance_workbench_metrics_error gauge\nfreelance_workbench_metrics_error 1\n",{status:503,headers:{"Content-Type":"text/plain; version=0.0.4; charset=utf-8","Cache-Control":"no-store"}})}}
