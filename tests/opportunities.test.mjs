@@ -47,3 +47,17 @@ test("Prometheus metrics expose only aggregate workspace state",()=>{
   assert.match(store,/SELECT active,COUNT\(\*\) AS count FROM opportunities GROUP BY active/);
   assert.doesNotMatch(metrics,/note|draft|payload_json|source_url/);
 });
+
+test("workspace changes create a bounded persistent audit trail",()=>{
+  const store=fs.readFileSync(new URL("../lib/store.ts",import.meta.url),"utf8");
+  const activity=fs.readFileSync(new URL("../app/api/activity/route.ts",import.meta.url),"utf8");
+  const metrics=fs.readFileSync(new URL("../app/api/metrics/route.ts",import.meta.url),"utf8");
+  assert.match(store,/CREATE TABLE IF NOT EXISTS workspace_events/);
+  assert.match(store,/event_type IN \('created','stage_changed','content_updated'\)/);
+  assert.match(store,/INSERT INTO workspace_events/);
+  assert.match(store,/Math\.min\(100/);
+  assert.match(activity,/listWorkspaceActivity/);
+  assert.match(activity,/Cache-Control":"no-store/);
+  assert.match(metrics,/freelance_workbench_workspace_events_total/);
+  assert.doesNotMatch(activity,/note|draft/);
+});
